@@ -1,0 +1,238 @@
+# Studio 7  ----
+
+# 1. Be sure to read the instructions file!
+
+# 2. The test answers file gives sample output and the functions we ran to get it. You should use this to verify your code is giving correct output in the format asked for.
+
+# 3. The handouts section (right side) of our MITx course page has a link for uploading you work.
+
+#--------------------------------------
+# Problem 1: Significance and power/type 1 and type 2 errors
+# See instructions for this studio
+
+studio7_problem_1 = function(theta_HA, alpha, n_tosses) {
+  cat("----------------------------------\n")
+  cat("Problem 1: Rejection region, actual significance, power\n")
+
+  # **** Be careful to avoid an 'off by 1 error' here.
+
+  # Arguments:
+  #   theta_HA = the probability of heads in the alternate hypothesis
+  #   alpha = significance level for our significance test
+  #   n_tosess = the number of tosses in one trial
+
+  theta_H0 = 0.5 # probability of heads in the null hypothesis
+
+  # Enforce theta_HA > theta_H0
+  if (theta_HA < theta_H0) {
+    warning("Problem 1: We require theta_HA > theta_H0", immediate.=TRUE)
+    return()
+  }
+
+  
+  # Do not change the above code.
+  # ********* YOUR CODE HERE ***********
+  # Calculate the critical value for the right-sided test
+  critical_value = qbinom(1 - alpha, n_tosses, theta_H0)
+
+  # Determine the rejection region
+  rejection_region = critical_value + 1
+
+  # Calculate the true significance
+  true_significance = pbinom(critical_value, n_tosses, theta_H0, lower.tail = FALSE)
+
+  # Calculate the power
+  power = pbinom(critical_value, n_tosses, theta_HA, lower.tail = FALSE)
+
+
+  cat("  Rejection region: ", rejection_region:n_tosses,"\n")
+  cat("  True significance=", true_significance,'\n')
+  cat("  Power=", power,'\n')
+}
+
+#--------------------
+# Problem 2: Simulation with a known prior.
+# See instructions for this studio
+
+studio7_problem_2 = function(theta_HA, alpha, n_tosses, n_trials, secret_prior) {
+  cat("----------------------------------\n")
+  cat("Problem 2: Simulation with a mixture of coins\n")
+
+  # Arguments:
+  #   theta_HA = the probability of heads in the alternate hypothesis
+  #   alpha = significance level for our significance test
+  #   n_tosses = the number of tosses in one trial
+  #   n_trials = the number of trials in the simulation
+  #   secret_prior = the secret prior used to pick the type of coin for each trial = c(prob. of H0, prob of HA)
+
+  theta_H0 = 0.5
+
+  # Enforce theta_HA > theta_H0
+  if (theta_HA < theta_H0) {
+    warning("Problem 1: We require theta_HA > theta_H0", immediate.=TRUE)
+    return()
+  }
+
+
+  # Do not change the above code.
+  # ********* YOUR CODE HERE ***********
+  critical_value = qbinom(1 - alpha, n_tosses, theta_H0)
+  rejection_region = critical_value + 1
+
+  num_rejections = 0
+  num_type1_errors = 0
+  num_type2_errors = 0
+  num_H0_chosen = 0
+  num_HA_chosen = 0
+
+  for (i in 1:n_trials) {
+    coin_chosen = sample(c("H0", "HA"), 1, prob = secret_prior)
+    if (coin_chosen == "H0") {
+      theta = theta_H0
+      num_H0_chosen = num_H0_chosen + 1
+    } else {
+      theta = theta_HA
+      num_HA_chosen = num_HA_chosen + 1
+    }
+
+    num_heads = rbinom(1, n_tosses, theta)
+
+    if (num_heads >= rejection_region) {
+      num_rejections = num_rejections + 1
+      if (coin_chosen == "H0") {
+        num_type1_errors = num_type1_errors + 1
+      } else {
+        num_type2_errors = num_type2_errors + 1
+      }
+    }
+  }
+
+  P_rej_H0 = num_type1_errors / num_H0_chosen
+  P_H0_rej = num_type1_errors / num_rejections
+  P_rej_HA = num_type2_errors / num_HA_chosen
+  P_HA_rej = num_type2_errors / num_rejections
+  P_rejection = num_rejections / n_trials
+
+  cat("  theta_HA=", theta_HA, ", alpha=", alpha, '\n', sep='')
+  cat("  n_tosses=", n_tosses, ", n_trials=", n_trials, '\n', sep='')
+  cat("  secret_prior=", secret_prior, '\n')
+  cat("  Number of rejections: ", num_rejections, '\n')
+  cat("  Number of type 1: ", num_type1_errors, '\n')
+  cat("  Number of type 2: ", num_type2_errors, '\n')
+  cat("  P(rejection | H0): ", P_rej_H0, '\n')
+  cat("  P(H0 | rejection): ", P_H0_rej, '\n')
+  cat("  P(rejection | HA): ", P_rej_HA, '\n')
+  cat("  P(HA | rejection): ", P_HA_rej, '\n')
+  cat("  P(rejection): ", P_rejection, '\n')
+}
+
+#--------------------
+# Problem 3: Simulation with only fair coins
+# See instructions for this studio
+
+studio7_problem_3a = function(theta_HA, alpha, n_tosses, n_trials) {
+  cat("----------------------------------\n")
+  cat("3a: Simulation with all fair coins: explain results\n")
+
+  secret_prior = c(1.0, 0) # Prob of H0, prob of HA
+  cat("----\n")
+  cat("# Problem 2 called from problem 3a\n")
+  studio7_problem_2(theta_HA, alpha, n_tosses, n_trials, secret_prior)
+  cat("----\n")
+
+  # Do not change the above code.
+  # ********* YOUR CODE HERE ***********
+
+  cat("  Explanation of the results:\n")
+  cat("  Since all coins are fair, the probability of type 1 error is equal to the significance level (alpha).\n")
+  cat("  There are no type 2 errors because there are no unfair coins in this simulation.\n")
+  cat("  P(rejection | H0) and P(rejection) should be close to the significance level as it represents the probability of rejecting the null hypothesis when it is actually true.\n")
+  cat("  P(H0 | rejection) should be close to 1, as we are certain that a fair coin was used in the experiment.\n")
+  cat("  P(rejection | HA) and P(HA | rejection) are not applicable in this case, as there are no unfair coins.\n")
+
+}
+
+
+studio7_problem_3b = function(theta_HA, alpha, n_tosses, n_trials) {
+  cat("-----\n")
+  cat("3b: Simulation with all unfair coins: explain results\n")
+
+  secret_prior = c(0.0, 1.0) # Prob of H0, prob of HA
+  cat("----\n")
+  cat("# Problem 2 called from problem 3b\n")
+  studio7_problem_2(theta_HA, alpha, n_tosses, n_trials, secret_prior)
+  cat("----\n")
+
+  # Do not change the above code.
+  # ********* YOUR CODE HERE ***********
+
+  cat("Since all coins are unfair, there should be no type 1 errors because there are no fair coins in this simulation.\n")
+  cat("The number of type 2 errors depends on the power of the test and how different the unfair coin is from a fair coin.\n")
+  cat("P(rejection | H0) is not applicable in this case, as there are no fair coins.\n")
+  cat("P(H0 | rejection) should be close to 0, as we are certain that an unfair coin was used in the experiment.\n")
+  cat("P(rejection | HA) and  P(rejection) should be close to the power of the test, as it represents the probability of rejecting the null hypothesis when the alternative hypothesis is true.\n")
+  cat("P(HA | rejection) should be close to 1, as we know that an unfair coin was used in the experiment.\n")
+
+}
+studio7_problem_3b(0.7, 0.05, 18, 1000)
+
+
+studio7_problem_3c = function() {
+  cat("-----\n")
+  cat("3c: Explain difference between P(H0 | rejection) and significance\n")
+
+
+  # Do not change the above code.
+  # ********* YOUR CODE HERE ***********
+
+  cat("Alpha is the probability of rejecting the null hypothesis when it is actually true.\n")
+  cat("P(H0 | rejection), on the other hand, is the conditional probability that the null hypothesis is true, given that we have rejected it. It represents the proportion of times we reject the null hypothesis when it is actually true, out of all the times we reject it.\n")
+}
+
+studio7_problem_3d = function() {
+  cat("-----\n")
+  cat("3d: Shout it out!\n")
+
+  # Do not change the above code.
+  # ********* YOUR CODE HERE ***********
+
+  # Shout the message 5 times
+  for (i in 1:5) {
+    cat("THE SIGNIFICANCE IS NOT THE PROBABILITY OF AN ERROR GIVEN REJECTION!\n")
+  }
+  
+  # Calmly state the correct explanation once
+  cat("It is the probability of rejection given H0. Frequentists don't compute P(Error | rejection).\n")
+
+}
+
+
+#--------------------
+# OPTIONAL Problem 4: Use Bayes theorem
+# See instructions for this studio
+
+studio7_problem_4 = function(theta_HA, alpha, n_tosses, prior) {
+  cat("----------------------------------\n")
+  cat("OPTIONAL 4: Use Bayes theorem\n")
+
+  theta_H0 = 0.5
+
+  # Enforce theta_HA > theta_H0
+  if (theta_HA < theta_H0) {
+    warning("Problem 1: We require theta_HA > theta_H0", immediate.=TRUE)
+    return()
+  }
+
+  # Do not change the above code.
+  # ********* YOUR CODE HERE ***********
+
+
+  cat("  true P(H0 | rejection): ", "PRINT THE VALUE" , '\n')
+  cat("  true P(HA | rejection): ", "PRINT THE VALUE", '\n')
+}
+studio7_problem_1(0.7, 0.05, 18)
+studio7_problem_2(0.7, 0.05, 18, 1000, c(0.3,0.7))
+studio7_problem_3a(0.7, 0.05, 18, 1000)
+studio7_problem_3b()
+studio7_problem_3c()
+studio7_problem_3d()
